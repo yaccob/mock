@@ -9,12 +9,12 @@ contexts too.
 Installation
 ------------
 
-Once you have [installed Go][golang-install], run these commands
-to install the `gomock` package and the `mockgen` tool:
+Once you have [installed Go][golang-install], install the the `mockgen` tool:
 
-    go get github.com/golang/mock/gomock
-    go install github.com/golang/mock/mockgen
+    go get github.com/golang/mock/mockgen
 
+_Note: It is recommended to have `GO111MODULE=on` to ensure the correct
+dependencies are used._
 
 Documentation
 -------------
