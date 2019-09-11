@@ -16,7 +16,9 @@ package gomock
 
 import (
 	"fmt"
+	"io"
 	"reflect"
+	"regexp"
 )
 
 // A Matcher is a representation of a class of values.
@@ -85,6 +87,30 @@ func (n notMatcher) String() string {
 	return "not(" + n.m.String() + ")"
 }
 
+type patternMatcher struct {
+	re *regexp.Regexp
+}
+
+func (p patternMatcher) Matches(x interface{}) bool {
+	if p.re == nil {
+		return false
+	}
+	var matched bool
+	switch t := x.(type) {
+	case string:
+		matched = p.re.MatchString(t)
+	case []byte:
+		matched = p.re.Match(t)
+	case io.RuneReader:
+		matched = p.re.MatchReader(t)
+	}
+	return matched
+}
+
+func (p patternMatcher) String() string {
+	return p.re.String()
+}
+
 type assignableToTypeOfMatcher struct {
 	targetType reflect.Type
 }
@@ -127,6 +153,25 @@ func Not(x interface{}) Matcher {
 		return notMatcher{m}
 	}
 	return notMatcher{Eq(x)}
+}
+
+// Pattern returns a matcher that matches if the received value matches regex pattern.
+//
+// Example usage:
+//   Pattern("s.*day").Matches("saturday") // returns true
+//   Pattern("s.*day").Matches("sunday") // returns true
+//   Pattern("s.*day").Matches("monday") // returns false
+//   Pattern(".*").Matches(42) // unsupported type always false
+//   Pattern(".*(").Matches("whatever") // malformed pattern always false
+func Pattern(pattern string) Matcher {
+	return patternMatcher{
+		re: func() *regexp.Regexp {
+			// We don't want to panic here in case of a malformed regex pattern.
+			// Instead, we ignore compilation failure and handle nil in the Matches function.
+			re, _ := regexp.Compile(pattern)
+			return re
+		}(),
+	}
 }
 
 // AssignableToTypeOf is a Matcher that matches if the parameter to the mock

@@ -37,6 +37,11 @@ func TestMatchers(t *testing.T) {
 			[]e{nil, (error)(nil), (chan bool)(nil), (*int)(nil)},
 			[]e{"", 0, make(chan bool), errors.New("err"), new(int)}},
 		{gomock.Not(gomock.Eq(4)), []e{3, "blah", nil, int64(4)}, []e{4}},
+		{gomock.Pattern("s.*day"), []e{"saturday", "sunday"}, []e{"Sunday", "monday"}},
+		// with input of unsupported type false is returned for any Pattern
+		{gomock.Pattern(".*"), []e{"42"}, []e{42}},
+		// with malformed regex-pattern false is returned for any input
+		{gomock.Pattern("s.*day)"), []e{}, []e{"saturday", "sunday"}},
 	}
 	for i, test := range tests {
 		for _, x := range test.yes {
